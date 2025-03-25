@@ -6,11 +6,19 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  basePath: '',
   images: {
-    loader: 'custom',
-    loaderFile: './image-loader.js',
-    unoptimized: true
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      }
+    ],
+    unoptimized: process.env.NODE_ENV === 'development',
+    domains: [
+      'localhost',
+      'vercel.app',
+      'now.sh'
+    ]
   },
   experimental: {
     optimizePackageImports: ['lucide-react']
