@@ -1,20 +1,17 @@
 {
-  "buildCommand": "next build",
-  "devCommand": "next dev",
-  "installCommand": "npm install",
-  "framework": "nextjs",
-  "outputDirectory": ".next",
-  "env": {
-    "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyD025uuHovCd69fSm6jikAYZG-h-sXVV-E",
-    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "walk-this-way-bbc01.firebaseapp.com",
-    "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "walk-this-way-bbc01",
-    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "walk-this-way-bbc01.firebasestorage.app",
-    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "865978847050",
-    "NEXT_PUBLIC_FIREBASE_APP_ID": "1:865978847050:web:f60a3201da69519077bbb3",
-    "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-D3JDN4RLSP",
-    "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyCFmsO_YEl-R9wbBSzyuGjmLE8aNe74OfE",
-    "NEXT_PUBLIC_SUPABASE_URL": "https://walk-this-way-bbc01.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhbGstdGhpcy13YXktYmJjMDEiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwOTU3NTIwMCwiZXhwIjoyMDI1MTUxMjAwfQ.example_key"
-  }
+  "version": 2,
+  "builds": [
+    {
+      "src": "next.config.js",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/images/(.*)",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "continue": true
+    }
+  ]
 }
  
