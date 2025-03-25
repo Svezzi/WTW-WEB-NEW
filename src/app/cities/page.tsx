@@ -101,7 +101,7 @@ export default function CitiesPage() {
           priority
           sizes="100vw"
           quality={100}
-          className="object-cover object-[center_85%]"
+          className="object-cover object-[center_45%]"
         />
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#111827]/50 to-[#111827] from-40% via-70% to-90%" />
