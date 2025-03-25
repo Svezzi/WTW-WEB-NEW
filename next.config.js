@@ -8,6 +8,7 @@ const nextConfig = {
   },
   output: 'standalone',
   images: {
+    domains: ['vercel.app'],
     remotePatterns: [
       {
         protocol: 'https',

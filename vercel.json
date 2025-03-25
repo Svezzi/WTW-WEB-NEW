@@ -1,10 +1,4 @@
 {
-  "version": 2,
   "buildCommand": "next build",
-  "outputDirectory": "out",
-  "public": true,
-  "cleanUrls": true,
-  "framework": "nextjs",
-  "installCommand": "npm install",
-  "devCommand": "next dev"
+  "framework": "nextjs"
 } 
