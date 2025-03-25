@@ -196,19 +196,36 @@ export default function Home() {
             <p className="mt-4 text-xl text-gray-300 sm:text-2xl md:text-3xl">Explore hidden paths and urban secrets curated by local insiders.</p>
           </div>
           
-          <div className="relative">
+          <div className="relative"
+               onMouseEnter={() => setIsPaused(true)}
+               onMouseLeave={() => {
+                 setIsPaused(false);
+                 setIsScrolling(null);
+               }}>
             {/* Left fade and scroll trigger */}
             <div 
               className="absolute inset-y-0 left-0 z-20 w-[150px] cursor-pointer bg-gradient-to-r from-[#111827] via-[#111827]/80 to-transparent"
-              onMouseEnter={() => startScrolling('left')}
-              onMouseLeave={stopScrolling}
+              onMouseEnter={() => {
+                setIsPaused(true);
+                startScrolling('left');
+              }}
+              onMouseLeave={() => {
+                setIsPaused(false);
+                stopScrolling();
+              }}
             />
             
             {/* Right fade and scroll trigger */}
             <div 
               className="absolute inset-y-0 right-0 z-20 w-[150px] cursor-pointer bg-gradient-to-l from-[#111827] via-[#111827]/80 to-transparent"
-              onMouseEnter={() => startScrolling('right')}
-              onMouseLeave={stopScrolling}
+              onMouseEnter={() => {
+                setIsPaused(true);
+                startScrolling('right');
+              }}
+              onMouseLeave={() => {
+                setIsPaused(false);
+                stopScrolling();
+              }}
             />
             
             {/* Scrolling container for routes */}
