@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .font-street {
+    font-family: var(--font-street);
+  }
+}
+
+:root {
+  --primary-color: #4CAF50;
+  --secondary-color: #1B4965;
+  --text-color: #E5E7EB;
+  --background-dark: #111827;
+  --background-darker: #0F172A;
+  --card-background: #1F2937;
+}
+
+body {
+  color: var(--text-color);
+  background: var(--background-dark);
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold text-gray-100;
+  }
+  
+  button {
+    @apply transition-all duration-200;
+  }
+}
