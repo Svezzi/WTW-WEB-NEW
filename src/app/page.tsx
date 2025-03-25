@@ -25,16 +25,27 @@ export default function Home() {
     setIsScrolling(null);
   };
 
-  // Handle manual scrolling
+  // Handle automatic scrolling for routes
   useEffect(() => {
     let scrollInterval: NodeJS.Timeout;
-    const scrollSpeed = 3;
+    const scrollSpeed = 2;
 
     if (isScrolling) {
       scrollInterval = setInterval(() => {
         if (routesScrollRef.current) {
           const scrollAmount = isScrolling === 'left' ? -scrollSpeed : scrollSpeed;
           routesScrollRef.current.scrollLeft += scrollAmount;
+
+          // Reset scroll position when reaching the end
+          const scrollWidth = routesScrollRef.current.scrollWidth;
+          const containerWidth = routesScrollRef.current.clientWidth;
+          const scrollPosition = routesScrollRef.current.scrollLeft;
+
+          if (scrollPosition + containerWidth >= scrollWidth) {
+            routesScrollRef.current.scrollLeft = 0;
+          } else if (scrollPosition <= 0 && isScrolling === 'left') {
+            routesScrollRef.current.scrollLeft = scrollWidth - containerWidth;
+          }
         }
       }, 16);
     }
