@@ -6,23 +6,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  output: 'standalone',
   images: {
-    unoptimized: true,
-    dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      }
-    ]
-  },
-  experimental: {
-    optimizePackageImports: ['lucide-react']
-  },
-  assetPrefix: '',
-  output: 'standalone'
+    unoptimized: false
+  }
 };
 
 module.exports = nextConfig; 
