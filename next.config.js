@@ -6,11 +6,12 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  output: 'standalone',
   images: {
-    unoptimized: false,
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [],
-    domains: ['vercel.app'],
+    unoptimized: true
   },
   experimental: {
     optimizePackageImports: ['lucide-react']
