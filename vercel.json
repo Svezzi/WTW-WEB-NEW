@@ -1,6 +1,9 @@
 {
-  "version": 2,
+  "buildCommand": "next build",
+  "devCommand": "next dev",
+  "installCommand": "npm install",
   "framework": "nextjs",
+  "outputDirectory": ".next",
   "env": {
     "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyD025uuHovCd69fSm6jikAYZG-h-sXVV-E",
     "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "walk-this-way-bbc01.firebaseapp.com",

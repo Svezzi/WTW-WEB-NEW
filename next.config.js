@@ -6,9 +6,14 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  output: 'standalone',
   images: {
-    unoptimized: true,
+    unoptimized: false,
     remotePatterns: [],
+    domains: ['vercel.app'],
+  },
+  experimental: {
+    optimizePackageImports: ['lucide-react']
   }
 };
 
