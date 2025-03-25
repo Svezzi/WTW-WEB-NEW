@@ -14,9 +14,7 @@ const nextConfig = {
         hostname: '**',
       }
     ]
-  },
-  distDir: 'out',
-  trailingSlash: true,
+  }
 };
 
 module.exports = nextConfig; 
