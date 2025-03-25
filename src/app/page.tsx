@@ -1,8 +1,8 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from "next/image";
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CityCarousel from '@/components/features/CityCarousel';
 import RouteGrid from '@/components/features/RouteGrid';
@@ -11,129 +11,9 @@ import Link from 'next/link';
 export default function Home() {
   const routesScrollRef = useRef<HTMLDivElement>(null);
   const localsScrollRef = useRef<HTMLDivElement>(null);
-  const [isScrolling, setIsScrolling] = useState<'left' | 'right' | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   
-  // Auto-scroll when hovering over edges
-  const startScrolling = (direction: 'left' | 'right') => {
-    setIsScrolling(direction);
-  };
-  
-  const stopScrolling = () => {
-    setIsScrolling(null);
-  };
-
-  // Handle automatic scrolling for routes
-  useEffect(() => {
-    const scrollSpeed = 2;
-    let scrollInterval: NodeJS.Timeout;
-
-    const startAutoScroll = () => {
-      scrollInterval = setInterval(() => {
-        if (routesScrollRef.current && !isPaused) {
-          routesScrollRef.current.scrollLeft += scrollSpeed;
-
-          // Reset scroll position when reaching the end
-          const scrollWidth = routesScrollRef.current.scrollWidth;
-          const containerWidth = routesScrollRef.current.clientWidth;
-          const scrollPosition = routesScrollRef.current.scrollLeft;
-
-          if (scrollPosition + containerWidth >= scrollWidth) {
-            routesScrollRef.current.scrollLeft = 0;
-          }
-        }
-      }, 16);
-    };
-
-    startAutoScroll();
-
-    return () => {
-      if (scrollInterval) {
-        clearInterval(scrollInterval);
-      }
-    };
-  }, [isPaused]);
-
-  // Handle automatic scrolling for locals
-  useEffect(() => {
-    const scrollSpeed = 2;
-    let scrollInterval: NodeJS.Timeout;
-
-    const startAutoScroll = () => {
-      scrollInterval = setInterval(() => {
-        if (localsScrollRef.current && !isPaused) {
-          localsScrollRef.current.scrollLeft += scrollSpeed;
-
-          // Reset scroll position when reaching the end
-          const scrollWidth = localsScrollRef.current.scrollWidth;
-          const containerWidth = localsScrollRef.current.clientWidth;
-          const scrollPosition = localsScrollRef.current.scrollLeft;
-
-          if (scrollPosition + containerWidth >= scrollWidth) {
-            localsScrollRef.current.scrollLeft = 0;
-          }
-        }
-      }, 16);
-    };
-
-    startAutoScroll();
-
-    return () => {
-      if (scrollInterval) {
-        clearInterval(scrollInterval);
-      }
-    };
-  }, [isPaused]);
-
-  // Handle manual scrolling
-  useEffect(() => {
-    let scrollInterval: NodeJS.Timeout;
-    const manualScrollSpeed = 8;
-
-    if (isScrolling) {
-      scrollInterval = setInterval(() => {
-        if (routesScrollRef.current) {
-          const scrollAmount = isScrolling === 'left' ? -manualScrollSpeed : manualScrollSpeed;
-          routesScrollRef.current.scrollLeft += scrollAmount;
-
-          // Reset scroll position when reaching the end during manual scroll
-          const scrollWidth = routesScrollRef.current.scrollWidth;
-          const containerWidth = routesScrollRef.current.clientWidth;
-          const scrollPosition = routesScrollRef.current.scrollLeft;
-
-          if (scrollPosition + containerWidth >= scrollWidth) {
-            routesScrollRef.current.scrollLeft = 0;
-          } else if (scrollPosition <= 0 && isScrolling === 'left') {
-            routesScrollRef.current.scrollLeft = scrollWidth - containerWidth;
-          }
-        }
-        if (localsScrollRef.current) {
-          const scrollAmount = isScrolling === 'left' ? -manualScrollSpeed : manualScrollSpeed;
-          localsScrollRef.current.scrollLeft += scrollAmount;
-
-          // Reset scroll position when reaching the end during manual scroll
-          const scrollWidth = localsScrollRef.current.scrollWidth;
-          const containerWidth = localsScrollRef.current.clientWidth;
-          const scrollPosition = localsScrollRef.current.scrollLeft;
-
-          if (scrollPosition + containerWidth >= scrollWidth) {
-            localsScrollRef.current.scrollLeft = 0;
-          } else if (scrollPosition <= 0 && isScrolling === 'left') {
-            localsScrollRef.current.scrollLeft = scrollWidth - containerWidth;
-          }
-        }
-      }, 16);
-    }
-
-    return () => {
-      if (scrollInterval) {
-        clearInterval(scrollInterval);
-      }
-    };
-  }, [isScrolling]);
-
   // Handle search submission
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,38 +164,33 @@ export default function Home() {
             <p className="mt-4 text-xl text-gray-300 sm:text-2xl md:text-3xl">Explore hidden paths and urban secrets curated by local insiders.</p>
           </div>
           
-          <div className="relative"
-               onMouseEnter={() => setIsPaused(true)}
-               onMouseLeave={() => {
-                 setIsPaused(false);
-                 setIsScrolling(null);
-               }}>
-            {/* Left fade and scroll trigger */}
-            <div 
-              className="absolute inset-y-0 left-0 z-20 w-[150px] cursor-pointer bg-gradient-to-r from-[#111827] via-[#111827]/80 to-transparent"
-              onMouseEnter={() => {
-                setIsPaused(true);
-                startScrolling('left');
+          <div className="relative">
+            {/* Left Arrow */}
+            <button
+              onClick={() => {
+                if (routesScrollRef.current) {
+                  const scrollAmount = -400;
+                  routesScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                }
               }}
-              onMouseLeave={() => {
-                setIsPaused(false);
-                stopScrolling();
+              className="absolute -left-12 top-1/2 z-30 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/70"
+            >
+              <ChevronLeft className="h-8 w-8" />
+            </button>
+
+            {/* Right Arrow */}
+            <button
+              onClick={() => {
+                if (routesScrollRef.current) {
+                  const scrollAmount = 400;
+                  routesScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                }
               }}
-            />
-            
-            {/* Right fade and scroll trigger */}
-            <div 
-              className="absolute inset-y-0 right-0 z-20 w-[150px] cursor-pointer bg-gradient-to-l from-[#111827] via-[#111827]/80 to-transparent"
-              onMouseEnter={() => {
-                setIsPaused(true);
-                startScrolling('right');
-              }}
-              onMouseLeave={() => {
-                setIsPaused(false);
-                stopScrolling();
-              }}
-            />
-            
+              className="absolute -right-12 top-1/2 z-30 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/70"
+            >
+              <ChevronRight className="h-8 w-8" />
+            </button>
+
             {/* Scrolling container for routes */}
             <div 
               ref={routesScrollRef}
