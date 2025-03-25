@@ -165,6 +165,12 @@ export default function Home() {
           </div>
           
           <div className="relative">
+            {/* Left fade */}
+            <div className="absolute inset-y-0 left-0 z-20 w-[150px] bg-gradient-to-r from-[#111827] via-[#111827]/80 to-transparent" />
+            
+            {/* Right fade */}
+            <div className="absolute inset-y-0 right-0 z-20 w-[150px] bg-gradient-to-l from-[#111827] via-[#111827]/80 to-transparent" />
+
             {/* Left Arrow */}
             <button
               onClick={() => {
