@@ -203,7 +203,10 @@ export default function Home() {
           alt="Hero background"
           fill
           priority
+          sizes="100vw"
+          quality={100}
           className="object-cover object-[center_85%]"
+          loader={({ src }) => src}
         />
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#111827]/30 to-[#111827] from-30% via-60% to-85%" />
