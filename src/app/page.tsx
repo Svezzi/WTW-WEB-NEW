@@ -164,18 +164,18 @@ export default function Home() {
             <p className="mt-4 text-xl text-gray-300 sm:text-2xl md:text-3xl">Explore hidden paths and urban secrets curated by local insiders.</p>
           </div>
           
-          <div className="relative">
+          <div className="relative px-16">
             {/* Left fade */}
-            <div className="absolute inset-y-0 left-0 z-20 w-[150px] bg-gradient-to-r from-[#111827] via-[#111827]/80 to-transparent" />
+            <div className="absolute inset-y-0 left-0 z-20 w-[150px] bg-gradient-to-r from-[#111827] via-[#111827]/80 to-transparent pointer-events-none" />
             
             {/* Right fade */}
-            <div className="absolute inset-y-0 right-0 z-20 w-[150px] bg-gradient-to-l from-[#111827] via-[#111827]/80 to-transparent" />
+            <div className="absolute inset-y-0 right-0 z-20 w-[150px] bg-gradient-to-l from-[#111827] via-[#111827]/80 to-transparent pointer-events-none" />
 
             {/* Left Arrow */}
             <button
               onClick={() => {
                 if (routesScrollRef.current) {
-                  const scrollAmount = -400;
+                  const scrollAmount = -800;
                   routesScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
                 }
               }}
@@ -188,7 +188,7 @@ export default function Home() {
             <button
               onClick={() => {
                 if (routesScrollRef.current) {
-                  const scrollAmount = 400;
+                  const scrollAmount = 800;
                   routesScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
                 }
               }}
@@ -200,12 +200,10 @@ export default function Home() {
             {/* Scrolling container for routes */}
             <div 
               ref={routesScrollRef}
-              className="hide-scrollbar flex w-full overflow-x-auto scroll-smooth"
+              className="hide-scrollbar flex gap-6 overflow-x-auto scroll-smooth py-8"
             >
-              <div className="flex border-t border-b border-gray-800">
-                <RouteGrid />
-                <RouteGrid />
-              </div>
+              <RouteGrid />
+              <RouteGrid />
             </div>
           </div>
         </div>
