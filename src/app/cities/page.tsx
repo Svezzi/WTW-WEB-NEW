@@ -95,11 +95,13 @@ export default function CitiesPage() {
       {/* Hero Section */}
       <section className="relative h-[60vh] w-full">
         <Image
-          src="/images/Hero Section 2.png"
-          alt="City skyline"
+          src="/images/hero-section-2.png"
+          alt="Hero background"
           fill
           priority
-          className="object-cover object-[center_45%]"
+          sizes="100vw"
+          quality={100}
+          className="object-cover object-[center_85%]"
         />
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#111827]/50 to-[#111827] from-40% via-70% to-90%" />
