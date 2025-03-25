@@ -6,10 +6,12 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  output: 'standalone',
+  output: 'export',
   images: {
-    unoptimized: false
-  }
+    unoptimized: true
+  },
+  distDir: 'out',
+  trailingSlash: true,
 };
 
 module.exports = nextConfig; 
