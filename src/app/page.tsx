@@ -179,7 +179,7 @@ export default function Home() {
                   routesScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
                 }
               }}
-              className="absolute -left-12 top-1/2 z-30 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/70"
+              className="absolute left-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/70 transition-all duration-300"
             >
               <ChevronLeft className="h-8 w-8" />
             </button>
@@ -192,7 +192,7 @@ export default function Home() {
                   routesScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
                 }
               }}
-              className="absolute -right-12 top-1/2 z-30 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/70"
+              className="absolute right-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/70 transition-all duration-300"
             >
               <ChevronRight className="h-8 w-8" />
             </button>
