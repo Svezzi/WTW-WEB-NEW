@@ -28,7 +28,7 @@ export default function Home() {
   // Handle automatic scrolling for routes
   useEffect(() => {
     let scrollInterval: NodeJS.Timeout;
-    const scrollSpeed = 2;
+    const scrollSpeed = 8;
 
     if (isScrolling) {
       scrollInterval = setInterval(() => {
@@ -215,7 +215,7 @@ export default function Home() {
                }}>
             {/* Left fade and scroll trigger */}
             <div 
-              className="absolute inset-y-0 left-0 z-20 w-[150px] cursor-pointer bg-gradient-to-r from-[#111827] via-[#111827]/80 to-transparent"
+              className="absolute inset-y-0 left-0 z-20 w-[150px] cursor-pointer bg-gradient-to-r from-[#111827] via-[#111827]/80 to-transparent flex items-center justify-start pl-8"
               onMouseEnter={() => {
                 setIsPaused(true);
                 startScrolling('left');
@@ -224,11 +224,13 @@ export default function Home() {
                 setIsPaused(false);
                 stopScrolling();
               }}
-            />
+            >
+              <ChevronLeft className="h-12 w-12 text-white/70" />
+            </div>
             
             {/* Right fade and scroll trigger */}
             <div 
-              className="absolute inset-y-0 right-0 z-20 w-[150px] cursor-pointer bg-gradient-to-l from-[#111827] via-[#111827]/80 to-transparent"
+              className="absolute inset-y-0 right-0 z-20 w-[150px] cursor-pointer bg-gradient-to-l from-[#111827] via-[#111827]/80 to-transparent flex items-center justify-end pr-8"
               onMouseEnter={() => {
                 setIsPaused(true);
                 startScrolling('right');
@@ -237,7 +239,9 @@ export default function Home() {
                 setIsPaused(false);
                 stopScrolling();
               }}
-            />
+            >
+              <ChevronRight className="h-12 w-12 text-white/70" />
+            </div>
             
             {/* Scrolling container for routes */}
             <div 
