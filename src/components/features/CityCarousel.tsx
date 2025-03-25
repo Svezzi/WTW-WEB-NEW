@@ -46,35 +46,34 @@ const cities: City[] = [
 
 export default function CityCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(true);
-
-  const checkScrollButtons = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setShowLeftArrow(scrollLeft > 0);
-      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
-
-  useEffect(() => {
-    const scrollContainer = scrollRef.current;
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', checkScrollButtons);
-      checkScrollButtons(); // Initial check
-    }
-
-    return () => {
-      if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', checkScrollButtons);
-      }
-    };
-  }, []);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -400 : 400;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      const container = scrollRef.current;
+      const itemWidth = container.children[0].clientWidth;
+      const scrollAmount = direction === 'left' ? -itemWidth : itemWidth;
+      
+      if (direction === 'left') {
+        setCurrentIndex((prev) => (prev === 0 ? cities.length - 1 : prev - 1));
+      } else {
+        setCurrentIndex((prev) => (prev === cities.length - 1 ? 0 : prev + 1));
+      }
+
+      const newScrollPosition = container.scrollLeft + scrollAmount;
+      
+      // If we're at the end and going right, or at the start and going left, reset position
+      if (newScrollPosition > container.scrollWidth - container.clientWidth || newScrollPosition < 0) {
+        container.scrollTo({
+          left: direction === 'right' ? 0 : container.scrollWidth - container.clientWidth,
+          behavior: 'instant'
+        });
+      } else {
+        container.scrollBy({
+          left: scrollAmount,
+          behavior: 'smooth'
+        });
+      }
     }
   };
 
@@ -84,30 +83,26 @@ export default function CityCarousel() {
         <h2 className="mb-10 text-4xl md:text-5xl lg:text-6xl font-street text-center text-white">Top Cities</h2>
         
         <div className="relative">
-          {/* Left Arrow */}
-          {showLeftArrow && (
-            <button
-              onClick={() => scroll('left')}
-              className="absolute -left-12 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/70"
-            >
-              <ChevronLeft className="h-8 w-8" />
-            </button>
-          )}
+          {/* Left Arrow - Always visible */}
+          <button
+            onClick={() => scroll('left')}
+            className="absolute -left-12 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/70 transition-colors"
+          >
+            <ChevronLeft className="h-8 w-8" />
+          </button>
 
-          {/* Right Arrow */}
-          {showRightArrow && (
-            <button
-              onClick={() => scroll('right')}
-              className="absolute -right-12 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/70"
-            >
-              <ChevronRight className="h-8 w-8" />
-            </button>
-          )}
+          {/* Right Arrow - Always visible */}
+          <button
+            onClick={() => scroll('right')}
+            className="absolute -right-12 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/70 transition-colors"
+          >
+            <ChevronRight className="h-8 w-8" />
+          </button>
 
           {/* Scrollable Container */}
           <div
             ref={scrollRef}
-            className="grid grid-cols-6 gap-4 overflow-x-auto scroll-smooth scrollbar-hide"
+            className="grid auto-cols-[calc(33.333%-1rem)] grid-flow-col gap-4 overflow-x-auto scroll-smooth scrollbar-hide"
           >
             {cities.map((city) => (
               <Link
