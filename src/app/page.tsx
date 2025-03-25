@@ -10,7 +10,6 @@ import Link from 'next/link';
 
 export default function Home() {
   const routesScrollRef = useRef<HTMLDivElement>(null);
-  const localsScrollRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState<'left' | 'right' | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,58 +63,6 @@ export default function Home() {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
-
-  const locals = [
-    {
-      image: '/images/Local 8.jpg',
-      name: 'Emma Wilson',
-      title: 'Street Photography Expert',
-      routes: 24,
-      location: 'London'
-    },
-    {
-      image: '/images/Local 2.jpg',
-      name: 'Isabella Romano',
-      title: 'Food & Culture Guide',
-      routes: 18,
-      location: 'Rome'
-    },
-    {
-      image: '/images/060294b27f354634a3998f4111f0d502.jpg',
-      name: 'Maria Santos',
-      title: 'History & Architecture Expert',
-      routes: 15,
-      location: 'Lisbon'
-    },
-    {
-      image: '/images/webimage-BF382495-FF39-4B62-8EF84884D4DABE4B-620x413.jpg',
-      name: 'James Chen',
-      title: 'Urban Explorer',
-      routes: 21,
-      location: 'Singapore'
-    },
-    {
-      image: '/images/Umbella-Street.jpg',
-      name: 'Anna Kowalsky',
-      title: 'Cultural Heritage Guide',
-      routes: 16,
-      location: 'Krakow'
-    },
-    {
-      image: '/images/Local 5.jpg',
-      name: 'Takashi Yamamoto',
-      title: 'Night Photography Expert',
-      routes: 19,
-      location: 'Tokyo'
-    },
-    {
-      image: '/images/svessikriss_Tokyo_street_Photography_Canon_EOS_90D_with_a_Canon_91cff273-49ba-4851-a512-123c136ded98.png',
-      name: 'Sophie Laurent',
-      title: 'Street Life Curator',
-      routes: 22,
-      location: 'Paris'
-    }
-  ];
 
   return (
     <div className="flex flex-col">
@@ -276,99 +223,6 @@ export default function Home() {
                 <p className="mt-6 text-2xl text-gray-200 drop-shadow-[0_2px_2px_rgba(0,0,0,0.3)]">
                   — Ralph Waldo Emerson
                 </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Local Spotters Section */}
-      <section className="relative w-full bg-[#111827] py-16">
-        <div className="mx-auto w-full max-w-[90vw] lg:max-w-[85vw] px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-4xl font-bold text-gray-100 font-street sm:text-5xl md:text-6xl lg:text-7xl">
-              Meet Our Locals
-            </h2>
-            <p className="mt-4 text-xl text-gray-300 sm:text-2xl md:text-3xl">
-              Some damn cool people who know their shit.
-            </p>
-          </div>
-
-          <div className="relative mt-12">
-            {/* Gradient shadows for scroll effect */}
-            <div className="pointer-events-none absolute left-0 top-0 z-10 w-[120px] h-full bg-gradient-to-r from-[#111827] to-transparent" />
-            <div className="pointer-events-none absolute right-0 top-0 z-10 w-[120px] h-full bg-gradient-to-l from-[#111827] to-transparent" />
-
-            {/* Scrolling container for locals */}
-            <div 
-              ref={localsScrollRef}
-              className="hide-scrollbar flex w-full overflow-x-auto scroll-smooth"
-            >
-              <div className="flex border-t border-b border-gray-800">
-                {/* First set of cards */}
-                <div className="flex">
-                  {locals.map((local) => (
-                    <div key={local.name} className="group w-[300px] flex-none p-4">
-                      <div className="overflow-hidden rounded-lg border border-gray-800 bg-[#1F2937] shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
-                        <div className="relative h-48">
-          <Image
-                            src={local.image}
-                            alt={local.name}
-                            fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                        </div>
-                        <div className="p-4">
-                          <h3 className="text-lg font-semibold text-gray-100">{local.name}</h3>
-                          <p className="text-sm text-[#4CAF50]">{local.title}</p>
-                          <div className="mt-4 flex items-center justify-between text-sm text-gray-400">
-                            <span>{local.location}</span>
-                            <span>{local.routes} routes created</span>
-                          </div>
-                          <Link 
-                            href={`/profile/${local.name.toLowerCase().replace(' ', '-')}`}
-                            className="mt-4 block w-full rounded-md bg-[#4CAF50] px-4 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-[#45a049]"
-                          >
-                            View Profile
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* Second set of cards (duplicate) */}
-                <div className="flex">
-                  {locals.map((local) => (
-                    <div key={`${local.name}-duplicate`} className="group w-[300px] flex-none p-4">
-                      <div className="overflow-hidden rounded-lg border border-gray-800 bg-[#1F2937] shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
-                        <div className="relative h-48">
-          <Image
-                            src={local.image}
-                            alt={local.name}
-                            fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                        </div>
-                        <div className="p-4">
-                          <h3 className="text-lg font-semibold text-gray-100">{local.name}</h3>
-                          <p className="text-sm text-[#4CAF50]">{local.title}</p>
-                          <div className="mt-4 flex items-center justify-between text-sm text-gray-400">
-                            <span>{local.location}</span>
-                            <span>{local.routes} routes created</span>
-                          </div>
-                          <Link 
-                            href={`/profile/${local.name.toLowerCase().replace(' ', '-')}`}
-                            className="mt-4 block w-full rounded-md bg-[#4CAF50] px-4 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-[#45a049]"
-                          >
-                            View Profile
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
