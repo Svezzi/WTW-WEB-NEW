@@ -145,6 +145,21 @@ const ControlTooltip = styled.div`
   pointer-events: none;
 `;
 
+const ActivityIndicator = styled.div`
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 15;
+`;
+
 export default function CustomRouteEditor({
   stops,
   onStopsChange,
@@ -174,6 +189,24 @@ export default function CustomRouteEditor({
   const [tooltipText, setTooltipText] = useState('');
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [showTooltip, setShowTooltip] = useState(false);
+  const [isRecalculatingSegment, setIsRecalculatingSegment] = useState(false);
+
+  // Add pulsing animation to control points
+  let pulseAnimation = null;
+  if (!isPreviewMode && editMode) {
+    // Create a pulsing effect for the control points to make them more noticeable
+    pulseAnimation = {
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: '#1E88E5',
+        fillOpacity: 0.7,
+        strokeColor: '#FFFFFF',
+        strokeWeight: 2,
+        scale: 12
+      },
+      animation: google.maps.Animation.BOUNCE
+    };
+  }
 
   if (!isLoaded) {
     return <div>Loading maps...</div>;
@@ -312,10 +345,11 @@ export default function CustomRouteEditor({
             position: controlPosition,
             map,
             draggable: true,
+            animation: google.maps.Animation.DROP, // Add drop animation when created
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               fillColor: '#1E88E5',
-              fillOpacity: 1,
+              fillOpacity: 0.8,
               strokeColor: '#FFFFFF',
               strokeWeight: 2,
               scale: 10
@@ -353,18 +387,26 @@ export default function CustomRouteEditor({
     saveToHistory();
   }, [map, stops, isPreviewMode, editMode]);
 
-  // Calculate directions between two points
+  // Calculate directions between two points, forcing through a via point if provided
   const calculateSegmentDirections = useCallback(async (
     startPoint: google.maps.LatLng,
-    endPoint: google.maps.LatLng
+    endPoint: google.maps.LatLng,
+    viaPoint?: google.maps.LatLng
   ): Promise<google.maps.DirectionsResult | null> => {
     if (!directionsServiceRef.current) return null;
     
     try {
       const result = await new Promise<google.maps.DirectionsResult>((resolve, reject) => {
+        // If we have a via point, use it as a waypoint to force the route through it
+        const waypoints = viaPoint ? [{
+          location: viaPoint,
+          stopover: false
+        }] : [];
+        
         directionsServiceRef.current!.route({
           origin: startPoint,
           destination: endPoint,
+          waypoints: waypoints,
           travelMode: google.maps.TravelMode.WALKING
         }, (response, status) => {
           if (status === google.maps.DirectionsStatus.OK && response) {
@@ -523,91 +565,97 @@ export default function CustomRouteEditor({
     const newPosition = e.latLng;
     const point = draggedMarkerRef.current;
     
-    // If this is a waypoint, update the stops array
-    if (point.isWaypoint && point.stopIndex !== undefined) {
-      const updatedStops = [...stops];
-      updatedStops[point.stopIndex].location.lat = newPosition.lat();
-      updatedStops[point.stopIndex].location.lng = newPosition.lng();
-      
-      // Update geocoding info
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ location: { lat: newPosition.lat(), lng: newPosition.lng() } }, (results, status) => {
-        if (status === "OK" && results && results[0]) {
-          const updatedStopsWithAddress = [...updatedStops];
-          updatedStopsWithAddress[point.stopIndex!].location.address = results[0].formatted_address;
-          updatedStopsWithAddress[point.stopIndex!].location.placeId = results[0].place_id;
-          
-          // Notify parent component
-          if (onStopsChange) {
-            onStopsChange(updatedStopsWithAddress);
-          }
-          
-          // Recalculate the entire route
-          calculateCompleteDirections();
-        }
-      });
-    } 
-    // If this is a control point, update just the affected segment
-    else if (point.isControlPoint && point.segmentId) {
-      // Find the segment this control point belongs to
-      const segment = segmentsRef.current.find(s => s.id === point.segmentId);
-      
-      if (segment && segment.path) {
-        setHasModifiedRoute(true);
+    try {
+      // If this is a waypoint, update the stops array
+      if (point.isWaypoint && point.stopIndex !== undefined) {
+        const updatedStops = [...stops];
+        updatedStops[point.stopIndex].location.lat = newPosition.lat();
+        updatedStops[point.stopIndex].location.lng = newPosition.lng();
         
-        // Get the start and end points of the segment
-        const startPoint = editPointsRef.current.find(p => p.isWaypoint && p.stopIndex === segment.startIndex);
-        const endPoint = editPointsRef.current.find(p => p.isWaypoint && p.stopIndex === segment.endIndex);
-        
-        if (startPoint && endPoint) {
-          try {
-            // Calculate new directions with the dragged point as a waypoint
-            const newDirections = await calculateSegmentDirections(
-              startPoint.position,
-              endPoint.position
-            );
+        // Update geocoding info
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: { lat: newPosition.lat(), lng: newPosition.lng() } }, (results, status) => {
+          if (status === "OK" && results && results[0]) {
+            const updatedStopsWithAddress = [...updatedStops];
+            updatedStopsWithAddress[point.stopIndex!].location.address = results[0].formatted_address;
+            updatedStopsWithAddress[point.stopIndex!].location.placeId = results[0].place_id;
             
-            if (newDirections && newDirections.routes[0]) {
-              // Update the segment with the new path
-              const newPoints: google.maps.LatLng[] = [];
-              newDirections.routes[0].legs[0].steps.forEach(step => {
-                if (step.polyline && step.polyline.points) {
-                  const stepPath = google.maps.geometry.encoding.decodePath(step.polyline.points);
-                  newPoints.push(...stepPath);
-                }
-              });
-              
-              // Update the polyline
-              segment.path.setPath(newPoints);
-              segment.points = newPoints;
-              
-              // Save to history
-              saveToHistory();
+            // Notify parent component
+            if (onStopsChange) {
+              onStopsChange(updatedStopsWithAddress);
             }
-          } catch (error) {
-            console.error('Failed to update segment:', error);
             
-            // Restore the original position if calculation fails
-            if (point.marker) {
-              point.marker.setPosition(point.position);
+            // Recalculate the entire route
+            calculateCompleteDirections();
+          }
+        });
+      } 
+      // If this is a control point, update just the affected segment
+      else if (point.isControlPoint && point.segmentId) {
+        // Find the segment this control point belongs to
+        const segment = segmentsRef.current.find(s => s.id === point.segmentId);
+        
+        if (segment && segment.path) {
+          setHasModifiedRoute(true);
+          setIsRecalculatingSegment(true);
+          
+          // Get the start and end points of the segment
+          const startPoint = editPointsRef.current.find(p => p.isWaypoint && p.stopIndex === segment.startIndex);
+          const endPoint = editPointsRef.current.find(p => p.isWaypoint && p.stopIndex === segment.endIndex);
+          
+          if (startPoint && endPoint) {
+            try {
+              // Calculate new directions with the dragged point as a waypoint
+              const newDirections = await calculateSegmentDirections(
+                startPoint.position,
+                endPoint.position,
+                newPosition
+              );
+              
+              if (newDirections && newDirections.routes[0]) {
+                // Update the segment with the new path
+                const newPoints: google.maps.LatLng[] = [];
+                newDirections.routes[0].legs[0].steps.forEach(step => {
+                  if (step.polyline && step.polyline.points) {
+                    const stepPath = google.maps.geometry.encoding.decodePath(step.polyline.points);
+                    newPoints.push(...stepPath);
+                  }
+                });
+                
+                // Update the polyline
+                segment.path.setPath(newPoints);
+                segment.points = newPoints;
+                
+                // Save to history
+                saveToHistory();
+              }
+            } catch (error) {
+              console.error('Failed to update segment:', error);
+              
+              // Restore the original position if calculation fails
+              if (point.marker) {
+                point.marker.setPosition(point.position);
+              }
+            } finally {
+              setIsRecalculatingSegment(false);
             }
           }
         }
       }
+    } finally {
+      // Clear the dragged marker reference
+      draggedMarkerRef.current = null;
+      
+      // Hide tooltip
+      setShowTooltip(false);
     }
-    
-    // Clear the dragged marker reference
-    draggedMarkerRef.current = null;
-    
-    // Hide tooltip
-    setShowTooltip(false);
   }, [map, stops, calculateSegmentDirections, onStopsChange, calculateCompleteDirections]);
 
   // Handle marker mouse over
   const handleMarkerMouseOver = useCallback((point: EditPoint) => {
     // Set tooltip text based on point type
-    if (point.isWaypoint) {
-      setTooltipText(`Stop ${point.stopIndex! + 1}: Drag to move`);
+    if (point.isWaypoint && point.stopIndex !== undefined) {
+      setTooltipText(`Stop ${point.stopIndex + 1}: Drag to move`);
     } else if (point.isControlPoint) {
       setTooltipText('Control point: Drag to shape route');
     }
@@ -877,6 +925,27 @@ export default function CustomRouteEditor({
       >
         {/* Map is just a container here, all markers and polylines are managed via refs */}
       </GoogleMap>
+      
+      {/* Loading indicators */}
+      {isCalculating && (
+        <ActivityIndicator>
+          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Recalculating complete route...
+        </ActivityIndicator>
+      )}
+      
+      {isRecalculatingSegment && (
+        <ActivityIndicator>
+          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Updating route segment...
+        </ActivityIndicator>
+      )}
     </EditorContainer>
   );
 } 
