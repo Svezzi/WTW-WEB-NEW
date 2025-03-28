@@ -52,14 +52,35 @@ const EditModeToggle = styled.button<{ $active: boolean }>`
   position: absolute;
   top: 10px;
   right: 10px;
-  padding: 8px 16px;
-  background-color: ${props => props.$active ? '#4CAF50' : '#f1f1f1'};
-  color: ${props => props.$active ? 'white' : '#333'};
+  padding: 10px 16px;
+  background-color: ${props => props.$active ? '#4CAF50' : '#3B82F6'};
+  color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   z-index: 10;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &:hover {
+    background-color: ${props => props.$active ? '#45a049' : '#2563EB'};
+    box-shadow: 0 6px 10px rgba(0,0,0,0.4);
+  }
+`;
+
+const EditModeIndicator = styled.div`
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 4px;
+  font-size: 13px;
+  z-index: 9;
 `;
 
 const UndoButton = styled.button`
@@ -146,7 +167,7 @@ export default function CustomRouteEditor({
   const isRecalculatingRef = useRef<boolean>(false);
 
   // State
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(!isPreviewMode);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [hasModifiedRoute, setHasModifiedRoute] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -296,8 +317,8 @@ export default function CustomRouteEditor({
               fillColor: '#1E88E5',
               fillOpacity: 1,
               strokeColor: '#FFFFFF',
-              strokeWeight: 1,
-              scale: 7
+              strokeWeight: 2,
+              scale: 10
             },
             zIndex: 5
           });
@@ -477,17 +498,19 @@ export default function CustomRouteEditor({
     if (tooltipRef.current && e.latLng) {
       const projection = map.getProjection();
       if (projection) {
-        const point = projection.fromLatLngToPoint(e.latLng);
-        const div = map.getDiv();
-        const offset = {
-          x: div.offsetLeft,
-          y: div.offsetTop
-        };
-        
-        setTooltipPosition({
-          x: (point.x * Math.pow(2, map.getZoom()!)) + offset.x,
-          y: (point.y * Math.pow(2, map.getZoom()!)) + offset.y - 30 // Position above cursor
-        });
+        const pointObj = projection.fromLatLngToPoint(e.latLng);
+        if (pointObj) {
+          const div = map.getDiv();
+          const offset = {
+            x: div.offsetLeft,
+            y: div.offsetTop
+          };
+          
+          setTooltipPosition({
+            x: (pointObj.x * Math.pow(2, map.getZoom()!)) + offset.x,
+            y: (pointObj.y * Math.pow(2, map.getZoom()!)) + offset.y - 30 // Position above cursor
+          });
+        }
       }
     }
   }, [map]);
@@ -746,8 +769,8 @@ export default function CustomRouteEditor({
                 fillColor: '#1E88E5',
                 fillOpacity: 1,
                 strokeColor: '#FFFFFF',
-                strokeWeight: 1,
-                scale: 7
+                strokeWeight: 2,
+                scale: 10
               }
             })
       });
@@ -792,8 +815,14 @@ export default function CustomRouteEditor({
             $active={editMode} 
             onClick={() => setEditMode(!editMode)}
           >
-            {editMode ? 'Exit Edit Mode' : 'Edit Route'}
+            {editMode ? '✓ Editing Enabled' : '✏️ Enable Editing'}
           </EditModeToggle>
+          
+          {editMode && (
+            <EditModeIndicator>
+              Drag the blue dots to reshape the route
+            </EditModeIndicator>
+          )}
           
           {/* History controls */}
           {hasModifiedRoute && (
