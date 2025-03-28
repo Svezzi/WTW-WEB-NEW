@@ -13,6 +13,7 @@ import { useRouteStore } from '@/stores/routeStore';
 import { nanoid } from 'nanoid';
 import { routeService } from '@/services/routeService';
 import { createClient } from '@/utils/supabase';
+import CustomRouteEditor from './CustomRouteEditor';
 
 // Styled components
 const Container = styled.div`
@@ -623,115 +624,6 @@ export default function CreateRoute() {
     }
   }, []);
 
-  // Add state to track modification history
-  const [originalDirections, setOriginalDirections] = useState<google.maps.DirectionsResult | null>(null);
-  const [hasModifiedRoute, setHasModifiedRoute] = useState(false);
-  const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
-  const [isRouteEditingActive, setIsRouteEditingActive] = useState(false);
-  // Add ref for directions history to avoid re-renders
-  const directionsHistoryRef = useRef<google.maps.DirectionsResult[]>([]);
-  // Flag to track if we're in the middle of an undo operation
-  const isUndoingRef = useRef(false);
-  
-  // Simple directions renderer configuration
-  const configureDirectionsRenderer = useCallback((renderer: google.maps.DirectionsRenderer) => {
-    if (!renderer) return;
-    
-    // Store ref to the renderer
-    directionsRendererRef.current = renderer;
-    
-    // Enable draggable routes with native functionality
-    renderer.setOptions({
-      draggable: true,
-      suppressMarkers: true
-    });
-    
-    // Add direct event listener for directions_changed event
-    google.maps.event.addListener(renderer, 'directions_changed', () => {
-      // Skip if we're in the middle of an undo operation
-      if (isUndoingRef.current) return;
-      
-      console.log('Route was modified directly');
-      
-      // Get current directions to store in history
-      const currentDirections = renderer.getDirections();
-      if (currentDirections) {
-        // If this is the first modification, store original directions
-        if (!hasModifiedRoute && directions) {
-          // Add to history
-          directionsHistoryRef.current = [directions];
-        } else if (directions) {
-          // Push the previous directions to history before this change
-          directionsHistoryRef.current.push(directions);
-        }
-      }
-      
-      // Mark as modified
-      setHasModifiedRoute(true);
-    });
-  }, [directions, hasModifiedRoute]);
-  
-  // Function to undo last change only
-  const undoLastChange = useCallback(() => {
-    // Skip if no history or no renderer
-    if (directionsHistoryRef.current.length === 0 || !directionsRendererRef.current) {
-      return;
-    }
-    
-    // Set flag to prevent loops
-    isUndoingRef.current = true;
-    
-    try {
-      // Get the last directions from history
-      const previousDirections = directionsHistoryRef.current.pop();
-      
-      if (previousDirections) {
-        // Apply previous directions
-        directionsRendererRef.current.setDirections(previousDirections);
-        
-        // Update React state directly
-        setDirections(previousDirections);
-        
-        // If no more history, reset modified flag
-        if (directionsHistoryRef.current.length === 0) {
-          setHasModifiedRoute(false);
-        }
-      }
-    } finally {
-      // Reset undo flag after a short delay
-      setTimeout(() => {
-        isUndoingRef.current = false;
-      }, 100);
-    }
-  }, []);
-  
-  // Very simple reset function - just put back original directions
-  const resetRoute = useCallback(() => {
-    if (originalDirections && directionsRendererRef.current) {
-      // Set flag to prevent loops
-      isUndoingRef.current = true;
-      
-      try {
-        directionsRendererRef.current.setDirections(originalDirections);
-        setDirections(originalDirections);
-        setHasModifiedRoute(false);
-        // Clear history
-        directionsHistoryRef.current = [];
-      } finally {
-        // Reset undo flag after a short delay
-        setTimeout(() => {
-          isUndoingRef.current = false;
-        }, 100);
-      }
-    }
-  }, [originalDirections]);
-  
-  // Simple onDirectionsChanged handler - just for the React component prop
-  const handleDirectionsChanged = useCallback(() => {
-    // This is intentionally empty - we use the direct event listener in configureDirectionsRenderer
-    // to avoid complex state updates that can cause loops
-  }, []);
-
   // Handle stop reordering via drag and drop
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -1020,9 +912,7 @@ export default function CreateRoute() {
       (result, status) => {
         if (status === window.google.maps.DirectionsStatus.OK) {
           setDirections(result);
-          setOriginalDirections(result);
           setAllRoutes(result?.routes || []);
-          setHasModifiedRoute(false);
           
           // Adjust viewport to fit the route
           if (map && result?.routes[0]?.bounds) {
@@ -1044,16 +934,6 @@ export default function CreateRoute() {
 
     calculateDirections();
   }, [stops, map, isLoaded, calculateDirections]);
-
-  // In the useEffect for directionsRendererRef setup
-  useEffect(() => {
-    if (!directions || !map || !directionsRendererRef.current) return;
-    
-    // When directions change, update the renderer
-    if (directionsRendererRef.current) {
-      directionsRendererRef.current.setDirections(directions);
-    }
-  }, [directions, map]);
 
   if (loadError) {
     return (
@@ -1140,10 +1020,7 @@ export default function CreateRoute() {
               
               <LocationList>
           <DragDropContext onDragEnd={handleDragEnd}>
-            <StrictModeDroppable 
-              droppableId="stops" 
-              isDropDisabled={isRouteEditingActive}
-            >
+            <StrictModeDroppable droppableId="stops" isDropDisabled={false}>
               {(provided) => (
                       <div
                   {...provided.droppableProps}
@@ -1239,11 +1116,9 @@ export default function CreateRoute() {
             {directions && (
               <CustomizationOverlay>
                 <h3 className="font-medium text-white mb-2">Route Editor</h3>
-                <RouteStatusIndicator $modified={hasModifiedRoute}>
+                <RouteStatusIndicator $modified={false}>
                   <span className="text-sm text-white">
-                    {hasModifiedRoute 
-                      ? 'Route modified - changes will be saved' 
-                      : 'Original route path'}
+                    Original route path
                   </span>
                 </RouteStatusIndicator>
                 <p className="text-sm text-gray-300 mb-3">
@@ -1252,24 +1127,6 @@ export default function CreateRoute() {
                 <p className="text-sm text-gray-300 mb-3">
                   <span className="text-indigo-400 font-medium">• Blue dots</span> are Google's handles for adjusting the route.
                 </p>
-                {hasModifiedRoute && (
-                  <>
-                    {directionsHistoryRef.current.length > 0 && (
-                      <button
-                        onClick={undoLastChange}
-                        className="w-full bg-gray-700 hover:bg-gray-600 text-white text-sm py-2 px-3 rounded flex items-center justify-center mb-2"
-                      >
-                        <span className="mr-1">↩</span> Undo Last Change
-                      </button>
-                    )}
-                    <button
-                      onClick={resetRoute}
-                      className="w-full bg-gray-700 hover:bg-gray-600 text-white text-sm py-2 px-3 rounded flex items-center justify-center"
-                    >
-                      <span className="mr-1">↺</span> Reset to Original Route
-                    </button>
-                  </>
-                )}
               </CustomizationOverlay>
             )}
 
@@ -1314,19 +1171,17 @@ export default function CreateRoute() {
                 </Marker>
               ))}
 
-              {directions && (
-                <>
-                  <DirectionsRenderer
-                    directions={directions}
-                    options={{
-                      suppressMarkers: true,
-                      draggable: true
-                    }}
-                    onDirectionsChanged={handleDirectionsChanged}
-                    onLoad={configureDirectionsRenderer}
-                  />
-                </>
-              )}
+              {directions && <CustomRouteEditor 
+                stops={stops}
+                initialDirections={directions}
+                onDirectionsChange={(newDirections) => {
+                  setDirections(newDirections);
+                }}
+                onStopsChange={(updatedStops) => {
+                  setStops(updatedStops);
+                  useRouteStore.getState().updateStops(updatedStops);
+                }}
+              />}
               
               {allRoutes.length > 1 && (
                 <RouteOptions>
@@ -1469,58 +1324,12 @@ export default function CreateRoute() {
             </Marker>
           ))}
 
-              {directions && (
-                <>
-                  <DirectionsRenderer
-                    directions={directions}
-                    options={{
-                      suppressMarkers: true,
-                      draggable: true
-                    }}
-                    onDirectionsChanged={handleDirectionsChanged}
-                    onLoad={configureDirectionsRenderer}
-                  />
-                </>
-              )}
+              {directions && <CustomRouteEditor 
+                stops={stops}
+                initialDirections={directions}
+                isPreviewMode={true}
+              />}
               
-              {/* Add route editor controls */}
-              {directions && (
-                <CustomizationOverlay>
-                  <h3 className="font-medium text-white mb-2">Route Editor</h3>
-                  <RouteStatusIndicator $modified={hasModifiedRoute}>
-                    <span className="text-sm text-white">
-                      {hasModifiedRoute 
-                        ? 'Route modified - changes will be saved' 
-                        : 'Original route path'}
-                    </span>
-                  </RouteStatusIndicator>
-                  <p className="text-sm text-gray-300 mb-3">
-                    <span className="text-indigo-400 font-medium">• Drag the route line</span> directly to customize your path.
-                  </p>
-                  <p className="text-sm text-gray-300 mb-3">
-                    <span className="text-indigo-400 font-medium">• Blue dots</span> are Google's handles for adjusting the route.
-                  </p>
-                  {hasModifiedRoute && (
-                    <>
-                      {directionsHistoryRef.current.length > 0 && (
-                        <button
-                          onClick={undoLastChange}
-                          className="w-full bg-gray-700 hover:bg-gray-600 text-white text-sm py-2 px-3 rounded flex items-center justify-center mb-2"
-                        >
-                          <span className="mr-1">↩</span> Undo Last Change
-                        </button>
-                      )}
-                      <button
-                        onClick={resetRoute}
-                        className="w-full bg-gray-700 hover:bg-gray-600 text-white text-sm py-2 px-3 rounded flex items-center justify-center"
-                      >
-                        <span className="mr-1">↺</span> Reset to Original Route
-                      </button>
-                    </>
-                  )}
-                </CustomizationOverlay>
-              )}
-
               {allRoutes.length > 1 && (
                 <RouteOptions>
                   {allRoutes.map((_, index) => (
