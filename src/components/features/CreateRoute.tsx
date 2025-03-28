@@ -560,7 +560,7 @@ export default function CreateRoute() {
   // Load Google Maps API
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: ['places'] as ['places'],
+    libraries: ['places', 'geometry'],
   });
 
   // Initialize travel mode after Google Maps is loaded
@@ -1181,6 +1181,7 @@ export default function CreateRoute() {
                   setStops(updatedStops);
                   useRouteStore.getState().updateStops(updatedStops);
                 }}
+                isLoaded={isLoaded}
               />}
               
               {allRoutes.length > 1 && (
@@ -1328,6 +1329,7 @@ export default function CreateRoute() {
                 stops={stops}
                 initialDirections={directions}
                 isPreviewMode={true}
+                isLoaded={isLoaded}
               />}
               
               {allRoutes.length > 1 && (

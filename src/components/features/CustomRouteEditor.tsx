@@ -38,6 +38,7 @@ interface CustomRouteEditorProps {
   initialDirections?: google.maps.DirectionsResult | null;
   isPreviewMode?: boolean;
   mapRef?: React.RefObject<google.maps.Map>;
+  isLoaded?: boolean;
 }
 
 // Styled components
@@ -129,14 +130,9 @@ export default function CustomRouteEditor({
   onDirectionsChange,
   initialDirections,
   isPreviewMode = false,
-  mapRef: externalMapRef
+  mapRef: externalMapRef,
+  isLoaded
 }: CustomRouteEditorProps) {
-  // Google Maps loading
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: libraries,
-  });
-
   // Refs
   const mapRef = useRef<google.maps.Map | null>(null);
   const directionsServiceRef = useRef<google.maps.DirectionsService | null>(null);
@@ -158,27 +154,31 @@ export default function CustomRouteEditor({
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [showTooltip, setShowTooltip] = useState(false);
 
+  if (!isLoaded) {
+    return <div>Loading maps...</div>;
+  }
+
   // Set up directions service when map is loaded
   useEffect(() => {
-    if (!isLoaded || !map) return;
+    if (!map) return;
     directionsServiceRef.current = new google.maps.DirectionsService();
 
     // Set map in external ref if provided
     if (externalMapRef && !externalMapRef.current) {
       externalMapRef.current = map;
     }
-  }, [isLoaded, map, externalMapRef]);
+  }, [map, externalMapRef]);
 
   // Initialize from initial directions when provided
   useEffect(() => {
-    if (!isLoaded || !map || !initialDirections || isRecalculatingRef.current) return;
+    if (!map || !initialDirections || isRecalculatingRef.current) return;
     
     // Store the original directions for reset functionality
     originalDirectionsRef.current = JSON.parse(JSON.stringify(initialDirections));
     
     // Convert directions to segments and create the initial route visualization
     createSegmentsFromDirections(initialDirections);
-  }, [isLoaded, map, initialDirections]);
+  }, [map, initialDirections]);
 
   // Convert Google Directions to our custom segments format
   const createSegmentsFromDirections = useCallback((directions: google.maps.DirectionsResult) => {
@@ -444,7 +444,7 @@ export default function CustomRouteEditor({
 
   // Update route when edit mode changes
   useEffect(() => {
-    if (!map || !isLoaded) return;
+    if (!map) return;
     
     // Show/hide control points based on edit mode
     editPointsRef.current.forEach(point => {
@@ -462,7 +462,7 @@ export default function CustomRouteEditor({
         segment.path.setEditable(editMode && !isPreviewMode);
       }
     });
-  }, [editMode, map, isLoaded, isPreviewMode]);
+  }, [editMode, map, isPreviewMode]);
 
   // Handle marker drag start
   const handleMarkerDragStart = useCallback((point: EditPoint) => {
@@ -501,7 +501,7 @@ export default function CustomRouteEditor({
     const point = draggedMarkerRef.current;
     
     // If this is a waypoint, update the stops array
-    if (point && point.isWaypoint && point.stopIndex !== undefined) {
+    if (point.isWaypoint && point.stopIndex !== undefined) {
       const updatedStops = [...stops];
       updatedStops[point.stopIndex].location.lat = newPosition.lat();
       updatedStops[point.stopIndex].location.lng = newPosition.lng();
@@ -525,7 +525,7 @@ export default function CustomRouteEditor({
       });
     } 
     // If this is a control point, update just the affected segment
-    else if (point && point.isControlPoint && point.segmentId) {
+    else if (point.isControlPoint && point.segmentId) {
       // Find the segment this control point belongs to
       const segment = segmentsRef.current.find(s => s.id === point.segmentId);
       
