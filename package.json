@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.6",
-    "@supabase/ssr": "latest",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "latest",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/styled-components": "^5.1.34",

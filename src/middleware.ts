@@ -10,7 +10,8 @@ export async function middleware(request: NextRequest) {
 
   // Only check auth for protected routes
   if (!request.nextUrl.pathname.startsWith('/settings') &&
-      !request.nextUrl.pathname.startsWith('/my-routes')) {
+      !request.nextUrl.pathname.startsWith('/my-routes') &&
+      !request.nextUrl.pathname.startsWith('/create-route')) {
     return response;
   }
 
@@ -43,9 +44,23 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) {
-    const redirectUrl = new URL('/auth/signin', request.url)
+    const redirectUrl = new URL('/sign-in', request.url)
     redirectUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname)
     return NextResponse.redirect(redirectUrl)
+  }
+  
+  // Check verification status for route creation
+  if (request.nextUrl.pathname.startsWith('/create-route')) {
+    const { data: userData, error } = await supabase
+      .from('profiles')
+      .select('is_verified')
+      .eq('id', session.user.id)
+      .single()
+    
+    // If user is not verified, redirect to a notification page
+    if (!userData?.is_verified) {
+      return NextResponse.redirect(new URL('/verification-required', request.url))
+    }
   }
 
   return response
@@ -56,6 +71,8 @@ export const config = {
     '/settings',
     '/settings/:path*',
     '/my-routes',
-    '/my-routes/:path*'
+    '/my-routes/:path*',
+    '/create-route',
+    '/create-route/:path*'
   ]
 } 

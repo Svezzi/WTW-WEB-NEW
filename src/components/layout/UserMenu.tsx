@@ -22,13 +22,13 @@ export default function UserMenu() {
     return (
       <div className="flex items-center gap-4">
         <Link
-          href="/auth/signin"
+          href="/sign-in"
           className="text-gray-300 hover:text-white"
         >
           LOG IN
         </Link>
         <Link
-          href="/auth/signup"
+          href="/sign-up"
           className="rounded bg-[#FF4400] px-4 py-2 font-medium text-white hover:bg-[#E63E00]"
         >
           SIGN UP
@@ -37,6 +37,9 @@ export default function UserMenu() {
     );
   }
 
+  const displayName = user.user_metadata?.username || user.email;
+  const firstLetter = displayName ? displayName[0].toUpperCase() : 'U';
+
   return (
     <div className="relative">
       <button
@@ -44,14 +47,14 @@ export default function UserMenu() {
         className="flex items-center gap-2 text-gray-300 hover:text-white"
       >
         <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center">
-          {user.photoURL ? (
+          {user.user_metadata?.avatar_url ? (
             <img
-              src={user.photoURL}
-              alt={user.displayName || user.email || 'User'}
+              src={user.user_metadata.avatar_url}
+              alt={displayName || 'User'}
               className="h-8 w-8 rounded-full"
             />
           ) : (
-            <span>{(user.email || 'U')[0].toUpperCase()}</span>
+            <span className="text-white">{firstLetter}</span>
           )}
         </div>
         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,7 +66,7 @@ export default function UserMenu() {
         <div className="absolute right-0 mt-2 w-48 rounded-md bg-[#1F2937] shadow-lg ring-1 ring-black ring-opacity-5">
           <div className="py-1">
             <div className="px-4 py-2 text-sm text-gray-400 border-b border-gray-700">
-              {user.displayName || user.email}
+              {displayName}
             </div>
             
             <Link

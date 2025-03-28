@@ -18,8 +18,16 @@ export const StrictModeDroppable = ({ children, ...props }: DroppableProps) => {
     return null;
   }
 
+  // Ensure all boolean props have explicit values
+  const safeProps = {
+    ...props,
+    isDropDisabled: props.isDropDisabled === true,
+    isCombineEnabled: props.isCombineEnabled === true,
+    ignoreContainerClipping: props.ignoreContainerClipping === true,
+  };
+
   return (
-    <Droppable {...props} isDropDisabled={props.isDropDisabled || false}>
+    <Droppable {...safeProps}>
       {children}
     </Droppable>
   );

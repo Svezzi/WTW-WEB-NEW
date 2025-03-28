@@ -6,6 +6,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CityCarousel from '@/components/features/CityCarousel';
 import RouteGrid from '@/components/features/RouteGrid';
+import CreateRouteButton from '@/components/CreateRouteButton';
 import Link from 'next/link';
 
 export default function Home() {

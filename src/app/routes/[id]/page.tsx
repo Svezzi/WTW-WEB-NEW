@@ -436,8 +436,23 @@ export default function RouteDetails({ params }: { params: Promise<{ id: string 
                 polylineOptions: {
                   strokeColor: '#4CAF50',
                   strokeWeight: 5,
-                  strokeOpacity: 0.8
-                }
+                  strokeOpacity: 0.7,
+                  icons: [
+                    {
+                      icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: '#4CAF50',
+                        fillOpacity: 1,
+                        scale: 3,
+                        strokeColor: '#4CAF50',
+                        strokeWeight: 1,
+                      },
+                      offset: '0',
+                      repeat: '12px',
+                    },
+                  ],
+                },
+                draggable: false
               }}
             />
           )}

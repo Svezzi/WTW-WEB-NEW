@@ -7,11 +7,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import AuthLayout from '@/components/layout/AuthLayout';
 import { createClient } from '@/utils/supabase';
 
-export default function SignIn() {
+export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams?.get('redirectedFrom') || '/';
@@ -23,25 +24,48 @@ export default function SignIn() {
     setError('');
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Sign up with Supabase
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username,
+          },
+        }
       });
       
       if (error) {
         throw error;
       }
       
-      // Successful login, redirect
-      router.push(redirectPath);
+      // Create profile after signup
+      if (data?.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            username,
+            email,
+            created_at: new Date().toISOString(),
+            is_verified: false,
+          });
+        
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+      }
+      
+      // Successful registration
+      router.push('/signup-success');
     } catch (error: any) {
-      setError(error.message || 'Failed to sign in');
+      setError(error.message || 'Failed to sign up');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGithubSignIn = async () => {
+  const handleGithubSignUp = async () => {
     setIsLoading(true);
     setError('');
     
@@ -57,7 +81,7 @@ export default function SignIn() {
         throw error;
       }
     } catch (error: any) {
-      setError(error.message || 'Failed to sign in with GitHub');
+      setError(error.message || 'Failed to sign up with GitHub');
       setIsLoading(false);
     }
   };
@@ -67,12 +91,33 @@ export default function SignIn() {
       <div className="rounded-lg bg-white p-8 shadow-sm">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
           <h2 className="text-center text-2xl font-bold leading-9 text-[#1B4965]">
-            Sign in to your account
+            Create your account
           </h2>
         </div>
 
         <div className="mt-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium leading-6 text-[#333333]"
+              >
+                Username
+              </label>
+              <div className="mt-2">
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="block w-full rounded-md border border-gray-200 px-3 py-2 text-[#333333] shadow-sm placeholder:text-gray-400 focus:border-[#4CAF50] focus:outline-none focus:ring-1 focus:ring-[#4CAF50]"
+                />
+              </div>
+            </div>
+            
             <div>
               <label
                 htmlFor="email"
@@ -106,7 +151,7 @@ export default function SignIn() {
                   id="password"
                   name="password"
                   type="password"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -121,32 +166,6 @@ export default function SignIn() {
               </div>
             )}
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-[#4CAF50] focus:ring-[#4CAF50]"
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-600"
-                >
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <Link
-                  href="/forgot-password"
-                  className="font-medium text-[#4CAF50] hover:text-[#45a049]"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
-            </div>
-
             <button
               type="submit"
               disabled={isLoading}
@@ -155,7 +174,7 @@ export default function SignIn() {
               {isLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                'Sign in'
+                'Sign up'
               )}
             </button>
           </form>
@@ -175,7 +194,7 @@ export default function SignIn() {
             <div className="mt-6">
               <button
                 type="button"
-                onClick={handleGithubSignIn}
+                onClick={handleGithubSignUp}
                 disabled={isLoading}
                 className="flex w-full items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-[#333333] shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#4CAF50] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -186,12 +205,12 @@ export default function SignIn() {
           </div>
 
           <p className="mt-8 text-center text-sm text-gray-500">
-            Not a member?{' '}
+            Already have an account?{' '}
             <Link
-              href="/sign-up"
+              href="/sign-in"
               className="font-medium text-[#4CAF50] hover:text-[#45a049]"
             >
-              Create an account
+              Sign in
             </Link>
           </p>
         </div>
