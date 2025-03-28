@@ -161,6 +161,23 @@ const ActivityIndicator = styled.div`
   z-index: 15;
 `;
 
+const PathDotsToggle = styled.button`
+  position: absolute;
+  top: 110px;
+  right: 10px;
+  padding: 6px 12px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
 export default function CustomRouteEditor({
   stops,
   onStopsChange,
@@ -191,6 +208,7 @@ export default function CustomRouteEditor({
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [showTooltip, setShowTooltip] = useState(false);
   const [isRecalculatingSegment, setIsRecalculatingSegment] = useState(false);
+  const [showPathDots, setShowPathDots] = useState(false);
 
   // Add pulsing animation to control points
   let pulseAnimation = null;
@@ -307,18 +325,18 @@ export default function CustomRouteEditor({
         map,
         zIndex: 1,
         editable: !isPreviewMode && editMode,
-        icons: [{
+        icons: showPathDots ? [{
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             fillColor: '#4CAF50',
-            fillOpacity: 1,
-            scale: 3,
+            fillOpacity: 0.3,
+            scale: 2,
             strokeColor: '#4CAF50',
-            strokeWeight: 1,
+            strokeWeight: 0,
           },
           offset: '0',
-          repeat: '12px'
-        }]
+          repeat: '30px'
+        }] : []
       });
       
       // Create segment object
@@ -392,7 +410,7 @@ export default function CustomRouteEditor({
     
     // Save to history
     saveToHistory();
-  }, [map, stops, isPreviewMode, editMode]);
+  }, [map, stops, isPreviewMode, editMode, showPathDots]);
 
   // Calculate directions between two points, forcing through a via point if provided
   const calculateSegmentDirections = useCallback(async (
@@ -647,6 +665,9 @@ export default function CustomRouteEditor({
                 segment.path.setPath(newPoints);
                 segment.points = newPoints;
                 
+                // Reposition control points along the new path
+                repositionControlPoints(segment);
+                
                 // Save to history
                 saveToHistory();
               }
@@ -807,18 +828,18 @@ export default function CustomRouteEditor({
         map,
         zIndex: 1,
         editable: !isPreviewMode && editMode,
-        icons: [{
+        icons: showPathDots ? [{
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             fillColor: '#4CAF50',
-            fillOpacity: 1,
-            scale: 3,
+            fillOpacity: 0.3,
+            scale: 2,
             strokeColor: '#4CAF50',
-            strokeWeight: 1,
+            strokeWeight: 0,
           },
           offset: '0',
-          repeat: '12px'
-        }]
+          repeat: '30px'
+        }] : []
       });
       
       return {
@@ -882,7 +903,57 @@ export default function CustomRouteEditor({
     // Update refs
     segmentsRef.current = newSegments;
     editPointsRef.current = newEditPoints;
-  }, [map, editMode, isPreviewMode, clearSegments, handleMarkerDragStart, handleMarkerDrag, handleMarkerDragEnd, handleMarkerMouseOver, handleMarkerMouseOut]);
+  }, [map, editMode, isPreviewMode, clearSegments, handleMarkerDragStart, handleMarkerDrag, handleMarkerDragEnd, handleMarkerMouseOver, handleMarkerMouseOut, showPathDots]);
+
+  // Add a function to reposition control points along the updated path
+  const repositionControlPoints = useCallback((segment: RouteSegment) => {
+    if (!segment.path || !segment.points.length) return;
+    
+    // Find all control points for this segment
+    const controlPoints = editPointsRef.current.filter(
+      point => point.isControlPoint && point.segmentId === segment.id
+    );
+    
+    if (!controlPoints.length) return;
+    
+    // Calculate interval for evenly distributing control points
+    const interval = Math.max(1, Math.floor(segment.points.length / (controlPoints.length + 1)));
+    
+    // Update positions of control points along the new path
+    controlPoints.forEach((controlPoint, index) => {
+      if (!controlPoint.marker) return;
+      
+      const newPosition = segment.points[(index + 1) * interval];
+      if (newPosition) {
+        controlPoint.marker.setPosition(newPosition);
+        controlPoint.position = newPosition;
+      }
+    });
+  }, []);
+
+  // Add a useEffect to update all polylines when showPathDots changes
+  useEffect(() => {
+    if (!map) return;
+    
+    segmentsRef.current.forEach(segment => {
+      if (!segment.path) return;
+      
+      segment.path.setOptions({
+        icons: showPathDots ? [{
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: '#4CAF50',
+            fillOpacity: 0.3,
+            scale: 2,
+            strokeColor: '#4CAF50',
+            strokeWeight: 0,
+          },
+          offset: '0',
+          repeat: '30px'
+        }] : []
+      });
+    });
+  }, [showPathDots, map]);
 
   // Clean up resources on unmount
   useEffect(() => {
@@ -908,9 +979,15 @@ export default function CustomRouteEditor({
           </EditModeToggle>
           
           {editMode && (
-            <EditModeIndicator>
-              Drag the blue star points (✱) to reshape the route. Green dots show the path.
-            </EditModeIndicator>
+            <>
+              <EditModeIndicator>
+                Drag the blue star points (✱) to reshape the route.
+              </EditModeIndicator>
+              
+              <PathDotsToggle onClick={() => setShowPathDots(!showPathDots)}>
+                {showPathDots ? 'Hide Path Dots' : 'Show Path Dots'}
+              </PathDotsToggle>
+            </>
           )}
           
           {/* History controls */}
