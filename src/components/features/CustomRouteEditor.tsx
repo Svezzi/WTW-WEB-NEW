@@ -14,6 +14,7 @@ interface RouteSegment {
   path: google.maps.Polyline | null;
   startIndex: number;
   endIndex: number;
+  modifiedControlPoints: google.maps.LatLng[];
 }
 
 interface EditPoint {
@@ -326,7 +327,8 @@ export default function CustomRouteEditor({
         points,
         path: polyline,
         startIndex: legIndex,
-        endIndex: legIndex + 1
+        endIndex: legIndex + 1,
+        modifiedControlPoints: []
       };
       
       // Add to segments
@@ -345,14 +347,19 @@ export default function CustomRouteEditor({
             position: controlPosition,
             map,
             draggable: true,
-            animation: google.maps.Animation.DROP, // Add drop animation when created
+            animation: google.maps.Animation.DROP,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               fillColor: '#1E88E5',
-              fillOpacity: 0.8,
+              fillOpacity: 0.9,
               strokeColor: '#FFFFFF',
-              strokeWeight: 2,
+              strokeWeight: 3,
               scale: 10
+            },
+            label: {
+              text: '✱',
+              color: 'white',
+              fontSize: '10px'
             },
             zIndex: 5
           });
@@ -391,17 +398,17 @@ export default function CustomRouteEditor({
   const calculateSegmentDirections = useCallback(async (
     startPoint: google.maps.LatLng,
     endPoint: google.maps.LatLng,
-    viaPoint?: google.maps.LatLng
+    viaPoints: google.maps.LatLng[] = []
   ): Promise<google.maps.DirectionsResult | null> => {
     if (!directionsServiceRef.current) return null;
     
     try {
       const result = await new Promise<google.maps.DirectionsResult>((resolve, reject) => {
-        // If we have a via point, use it as a waypoint to force the route through it
-        const waypoints = viaPoint ? [{
-          location: viaPoint,
+        // Convert all via points to waypoints
+        const waypoints = viaPoints.map(point => ({
+          location: point,
           stopover: false
-        }] : [];
+        }));
         
         directionsServiceRef.current!.route({
           origin: startPoint,
@@ -605,11 +612,25 @@ export default function CustomRouteEditor({
           
           if (startPoint && endPoint) {
             try {
-              // Calculate new directions with the dragged point as a waypoint
+              // Add the current drag point to the segment's modified control points
+              // Make sure we don't add duplicates - remove any existing point that's very close
+              const existingIndex = segment.modifiedControlPoints.findIndex(p => 
+                google.maps.geometry.spherical.computeDistanceBetween(p, newPosition) < 20
+              );
+              
+              if (existingIndex >= 0) {
+                // Replace existing nearby point
+                segment.modifiedControlPoints[existingIndex] = newPosition;
+              } else {
+                // Add as a new point
+                segment.modifiedControlPoints.push(newPosition);
+              }
+              
+              // Calculate new directions with ALL modified control points
               const newDirections = await calculateSegmentDirections(
                 startPoint.position,
                 endPoint.position,
-                newPosition
+                segment.modifiedControlPoints
               );
               
               if (newDirections && newDirections.routes[0]) {
@@ -657,7 +678,7 @@ export default function CustomRouteEditor({
     if (point.isWaypoint && point.stopIndex !== undefined) {
       setTooltipText(`Stop ${point.stopIndex + 1}: Drag to move`);
     } else if (point.isControlPoint) {
-      setTooltipText('Control point: Drag to shape route');
+      setTooltipText('Control point: Drag to reshape route');
     }
     
     // Show tooltip
@@ -676,7 +697,11 @@ export default function CustomRouteEditor({
       ...segment,
       points: [...segment.points],
       // Don't clone the actual polyline objects
-      path: segment.path
+      path: segment.path,
+      // Clone the modified control points
+      modifiedControlPoints: segment.modifiedControlPoints.map(point => 
+        new google.maps.LatLng(point.lat(), point.lng())
+      )
     }));
     
     const editPointsCopy = editPointsRef.current.map(point => ({
@@ -740,7 +765,14 @@ export default function CustomRouteEditor({
   const handleReset = useCallback(() => {
     // Reset to original directions if available
     if (originalDirectionsRef.current) {
-      createSegmentsFromDirections(originalDirectionsRef.current);
+      // Clear all segments and custom points before recreating
+      clearSegments();
+      
+      // Make a fresh copy of the original directions
+      const originalDirectionsCopy = JSON.parse(JSON.stringify(originalDirectionsRef.current));
+      
+      // Recreate with fresh segments (no modified control points)
+      createSegmentsFromDirections(originalDirectionsCopy);
       
       // Notify parent component if needed
       if (onDirectionsChange) {
@@ -752,7 +784,7 @@ export default function CustomRouteEditor({
       historyIndexRef.current = -1;
       setHasModifiedRoute(false);
     }
-  }, [onDirectionsChange, createSegmentsFromDirections]);
+  }, [onDirectionsChange, createSegmentsFromDirections, clearSegments]);
 
   // Apply a state from history
   const applyHistoryState = useCallback((index: number) => {
@@ -791,7 +823,11 @@ export default function CustomRouteEditor({
       
       return {
         ...historySeg,
-        path: polyline
+        path: polyline,
+        // Clone the modified control points array
+        modifiedControlPoints: historySeg.modifiedControlPoints.map(point => 
+          new google.maps.LatLng(point.lat(), point.lng())
+        )
       };
     });
     
@@ -815,10 +851,15 @@ export default function CustomRouteEditor({
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 fillColor: '#1E88E5',
-                fillOpacity: 1,
+                fillOpacity: 0.9,
                 strokeColor: '#FFFFFF',
-                strokeWeight: 2,
+                strokeWeight: 3,
                 scale: 10
+              },
+              label: {
+                text: '✱',
+                color: 'white',
+                fontSize: '10px'
               }
             })
       });
@@ -868,7 +909,7 @@ export default function CustomRouteEditor({
           
           {editMode && (
             <EditModeIndicator>
-              Drag the blue dots to reshape the route
+              Drag the blue star points (✱) to reshape the route. Green dots show the path.
             </EditModeIndicator>
           )}
           
