@@ -575,12 +575,40 @@ export default function CreateRoute() {
   useEffect(() => {
     async function checkVerification() {
       try {
+        // For development, always set as verified
+        setIsVerified(true);
+        setIsCheckingVerification(false);
+        return;
+        
+        /* Original auth code - disabled for now
         const { data: { session } } = await supabase.auth.getSession();
         
+        // Get URL parameters to check for bypass flag
+        const urlParams = new URLSearchParams(window.location.search);
+        const bypassAuth = urlParams.get('bypassAuth') === 'true';
+        
+        // If bypass is enabled, skip verification
+        if (bypassAuth) {
+          setIsVerified(true);
+          setIsCheckingVerification(false);
+          return;
+        }
+        
         if (!session?.user) {
+          // Check if we came from sign-in with bypassAuth parameter
+          const redirectedFromUrl = new URL(window.location.href);
+          if (redirectedFromUrl.searchParams.has('from') && 
+              redirectedFromUrl.searchParams.get('from') === 'skip-auth') {
+            // User chose to skip auth, allow access without verification
+            setIsVerified(true);
+            setIsCheckingVerification(false);
+            return;
+          }
+          
+          // Regular auth flow - redirect to sign-in
           router.push('/sign-in?redirectedFrom=/create-route');
-      return;
-    }
+          return;
+        }
 
         setUserId(session.user.id);
         
@@ -593,8 +621,12 @@ export default function CreateRoute() {
         }
         
         setIsVerified(true);
+        */
       } catch (error) {
         console.error('Error checking verification status:', error);
+        // For development, set as verified even if there's an error
+        setIsVerified(true);
+        setIsCheckingVerification(false);
       } finally {
         setIsCheckingVerification(false);
       }
