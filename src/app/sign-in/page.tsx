@@ -62,6 +62,12 @@ export default function SignIn() {
     }
   };
 
+  const handleDevBypass = () => {
+    // Implement the logic to bypass authentication for DEV MODE
+    console.log("DEV MODE: Authentication bypassed");
+    router.push(redirectPath);
+  };
+
   return (
     <AuthLayout>
       <div className="rounded-lg bg-white p-8 shadow-sm">
@@ -159,6 +165,14 @@ export default function SignIn() {
               )}
             </button>
           </form>
+
+          {/* DEV MODE: Skip authentication button */}
+          <button
+            onClick={handleDevBypass}
+            className="mt-4 flex w-full justify-center rounded-md bg-blue-500 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            DEV MODE: Skip Authentication
+          </button>
 
           <div className="mt-6">
             <div className="relative">
