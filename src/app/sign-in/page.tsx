@@ -2,7 +2,7 @@
 
 import { Github, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AuthLayout from '@/components/layout/AuthLayout';
 import { createClient } from '@/utils/supabase';
@@ -16,6 +16,26 @@ export default function SignIn() {
   const searchParams = useSearchParams();
   const redirectPath = searchParams?.get('redirectedFrom') || '/';
   const supabase = createClient();
+
+  // Auto bypass in development
+  useEffect(() => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const shouldAutomaticallyBypass = isDevelopment && window.location.hostname === 'localhost';
+    
+    if (shouldAutomaticallyBypass) {
+      console.log('DEV MODE: Auto-bypassing authentication');
+      // Delay for a moment to avoid instant redirect which might confuse the user
+      setTimeout(() => {
+        router.push(redirectPath);
+      }, 500);
+    }
+  }, [redirectPath, router]);
+
+  const handleDevBypass = () => {
+    // Implement the logic to bypass authentication for DEV MODE
+    console.log("DEV MODE: Authentication bypassed");
+    router.push(redirectPath);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -62,12 +82,6 @@ export default function SignIn() {
     }
   };
 
-  const handleDevBypass = () => {
-    // Implement the logic to bypass authentication for DEV MODE
-    console.log("DEV MODE: Authentication bypassed");
-    router.push(redirectPath);
-  };
-
   return (
     <AuthLayout>
       <div className="rounded-lg bg-white p-8 shadow-sm">
@@ -75,6 +89,13 @@ export default function SignIn() {
           <h2 className="text-center text-2xl font-bold leading-9 text-[#1B4965]">
             Sign in to your account
           </h2>
+          
+          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-md p-4">
+            <p className="text-sm text-blue-600 font-medium">
+              DEMO MODE: Authentication is being bypassed automatically.
+              <br />If it doesn't redirect, use the DEV MODE button below.
+            </p>
+          </div>
         </div>
 
         <div className="mt-8">
