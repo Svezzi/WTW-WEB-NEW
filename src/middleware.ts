@@ -1,18 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  // Simply allow all requests through without any auth checks
-  // This is for demonstration purposes only
-  return NextResponse.next();
+// Completely disable middleware to prevent redirect loops
+export function middleware() {
+  // Empty function means middleware does nothing
+  return;
 }
 
 export const config = {
-  matcher: [
-    '/settings',
-    '/settings/:path*',
-    '/my-routes',
-    '/my-routes/:path*',
-    '/create-route',
-    '/create-route/:path*'
-  ]
+  matcher: [] // Empty matcher means it applies to no routes
 } 
